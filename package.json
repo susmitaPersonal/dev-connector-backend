@@ -1,0 +1,29 @@
+{
+  "name": "devconnector",
+  "version": "1.0.0",
+  "description": "Network app for devs.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/susmitaPersonal/dev-connector-backend.git"
+  },
+  "keywords": [
+    "node.js",
+    "javascript",
+    "express.js",
+    "mongoDB"
+  ],
+  "author": "Susmita Biswas",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/susmitaPersonal/dev-connector-backend/issues"
+  },
+  "homepage": "https://github.com/susmitaPersonal/dev-connector-backend#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
