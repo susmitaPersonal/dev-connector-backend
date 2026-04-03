@@ -1,15 +1,19 @@
 const express = require('express');
-
+const dotenv = require('dotenv');
+dotenv.config();
 const app = express();
+const { connectDB } = require('./config/db');
 
-app.use("/test",(req, res) => {
-    res.send('Hey devs ready to connect? ;) \n TESTING 123');
+
+app.use(express.json())
+
+// Connect to the database
+connectDB().then(() => {
+    console.log('Database connection established in app.js');
+    app.listen(process.env.PORT || 5000, () => {
+        console.log(`Server started on port ${process.env.PORT || 5000}`);
+    });
+}).catch((err) => {
+    console.error('Failed to connect to the database in app.js:', err);
 })
 
-app.use("/dashboard",(req, res) => {
-    res.send('Welcome to the Dashboard!');
-})
-
-app.listen(process.env.PORT || 5000, () => {
-  console.log(`Server started on port ${process.env.PORT || 5000}`);
-});
