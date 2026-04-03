@@ -3,9 +3,15 @@ const dotenv = require('dotenv');
 dotenv.config();
 const app = express();
 const { connectDB } = require('./config/db');
-
+const User = require("./models/user")
 
 app.use(express.json())
+
+app.post("/signup", async (req, res) => {
+    const user = new User(req.body)
+    await user.save()
+    
+})
 
 // Connect to the database
 connectDB().then(() => {
