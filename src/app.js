@@ -5,7 +5,6 @@ const app = express();
 const { connectDB } = require('./config/db');
 const User = require("./models/user");
 const userval = require('./validationSchema/auth');
-const v = require("validator");
 
 app.use(express.json())
 
@@ -71,29 +70,10 @@ app.delete("/delete-user", async(req, res) => {
 
 app.patch("/update-user", async (req, res) => {
     try {
-        const data = req.body;
-        if(!v.isEmail(data?.emailId)) {
-            throw new Error("Please provide valid email id.")
-        }
-        if(!v.isMobilePhone(data?.phoneNumber, 'any', { strictMode: true })) {
-            throw new Error("Please provide valid phone number.")
-        }
-        if(!v.isURL(data?.photoUrl)) {
-            throw new Error("Please provide valid URL for photo.")
-        }
-        if(!data || !res.params.id) {
-            return res.status(400).json({ error: 'User ID is required' });
-        }
-            const NOT_ALLOWED_UPDATES = ["emailId", "createdAt", "updatedAt", "__v"];
-        // const updates = Object.keys(data);
-        const isValidate = Object.keys(data).every(k => !NOT_ALLOWED_UPDATES.includes(k));
-        
-        if(!isValidate) {
-            return res.status(400).json({ error: 'Invalid updates! You cannot update emailId, _id, createdAt, updatedAt, or __v' });
-        }
-        
-        if(data?.skills?.length > 20) {
-            return res.status(400).json({ error: 'Maximum 20 skills allowed' });
+        // const data = req.body;
+        const { success, data, error } = updateSchema.safeParse(req.body)
+        if(!success) {
+            return res.status(400).json({ error: error.format() });
         }
 
         const updateUser = await User.findByIdAndUpdate({

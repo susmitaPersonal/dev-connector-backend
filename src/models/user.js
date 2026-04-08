@@ -35,7 +35,7 @@ const UserSchema = new mongoose.Schema({
         minLength: 10,
         maxLength: 15,
         validate(value) {
-            if(!v.isPassportNumber(value, 'any', { strictMode: true })) {
+            if(!v.isMobilePhone(value, 'any', { strictMode: true })) {
                 throw new Error("Invalid phone number format")
             
             }  
