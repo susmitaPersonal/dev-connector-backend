@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcrypt');
 const dotenv = require('dotenv');
 dotenv.config();
 const app = express();
@@ -16,7 +17,8 @@ app.post("/signup", async (req, res) => {
             errors: error.format()
         })
     }
-    const user = new User(data)
+    const passwordHash = await bcrypt.hash(data.password, 10);
+    const user = new User({...data, password: passwordHash})
     try {
         await user.save()
         return res.status(200).send("User added successfully.")
