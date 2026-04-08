@@ -3,14 +3,26 @@ const dotenv = require('dotenv');
 dotenv.config();
 const app = express();
 const { connectDB } = require('./config/db');
-const User = require("./models/user")
+const User = require("./models/user");
+const userval = require('./validationSchema/auth');
 
 app.use(express.json())
 
 app.post("/signup", async (req, res) => {
-    const user = new User(req.body)
-    await user.save()
-    
+    const {success, data, error} = userval.safeParse(req.body);
+    if (!success) {
+        return res.status(401).json({
+            success: false,
+            errors: error.format()
+        })
+    }
+    const user = new User(data)
+    try {
+        await user.save()
+        return res.status(200).send("User added successfully.")
+    } catch (e) {
+        return res.status(400).send("Error saving the user: " + e.message)
+    }
 })
 
 app.get("/feed", async (req, res) => {
@@ -58,13 +70,16 @@ app.delete("/delete-user", async(req, res) => {
 
 app.patch("/update-user", async (req, res) => {
     try {
-        const data = req.body;
-        if(!data || !data.id) {
-            return res.status(400).json({ error: 'User ID is required' });
+        // const data = req.body;
+        const { success, data, error } = updateSchema.safeParse(req.body)
+        if(!success) {
+            return res.status(400).json({ error: error.format() });
         }
+
         const updateUser = await User.findByIdAndUpdate({
             _id: data.id
-        }, data, { returnDocument: after, runValidators: true });
+        }, data, { returnDocument: "after", runValidators: true });
+        return res.status(201).json({data: updateUser, message: "User updated successfully"})
     }
     catch(err) {
         return res.status(500).json({error: 'Failed to update user' });

@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
+const v = require("validator")
 const { minLength, maxLength, uppercase } = require("zod");
+
 
 const UserSchema = new mongoose.Schema({
     firstName: {
@@ -19,18 +21,34 @@ const UserSchema = new mongoose.Schema({
         unique: true,
         lowercase: true,
         uppercase: true,
-        trim: true
+        trim: true,
+        validate(value) {
+            if(!v.isEmail(value)) {
+                throw new Error("Invalid email Id")
+            }
+        }
     },
-     phoneNumber: {
+    phoneNumber: {
         type: String,
         required: true,
         unique: true,
         minLength: 10,
-        maxLength: 15
+        maxLength: 15,
+        validate(value) {
+            if(!v.isMobilePhone(value, 'any', { strictMode: true })) {
+                throw new Error("Invalid phone number format")
+            
+            }  
+        }
     },
     password: {
         type: String,
-        required: true
+        required: true,
+        validate(value) {
+            if(!v.isStrongPassword(value, { minLength: 8, minLowercase: 1, minUppercase: 1, minNumbers: 1, minSymbols: 1 })) {
+                throw new Error("Password must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, one number, and one symbol")
+            }
+        }
     },
     age: {
         type: Number,
@@ -48,15 +66,20 @@ const UserSchema = new mongoose.Schema({
         }
     },
     about: {
-        type: string,
+        type: String,
         default: "This is the default about section. Please update it to tell us more about yourself!"
     },
     skills: {
-        type: [string]
+        type: [String]
     },
-    photo_url: {
+    photoUrl: {
         type: String,
-        default: "https://www.pngall.com/wp-content/uploads/5/Profile-PNG-High-Quality-Image.png"
+        default: "https://www.pngall.com/wp-content/uploads/5/Profile-PNG-High-Quality-Image.png",
+        validate(value) { 
+            if(!v.isURL(value)) {
+                throw new Error("Please provide proper URL for photo");
+            }
+        }
     }
 
 },
