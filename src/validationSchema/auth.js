@@ -1,7 +1,7 @@
 import { z } from "zod";
 import validator from "validator";
 
-export const signUpSchema = (isSignup = true) =>
+export const signUpSchema =
   z.object({
     firstName: z
       .string()
@@ -22,7 +22,7 @@ export const signUpSchema = (isSignup = true) =>
 
     phoneNumber: z
       .string()
-      .refine((val) => validator.isMobilePhone(val, "any", { strictMode: true }), {
+      .refine((val) => validator.isMobilePhone(val), {
         message: "Please provide valid phone number.",
       }),
 
@@ -43,6 +43,9 @@ export const signUpSchema = (isSignup = true) =>
         }
       ),
 
+    gender: z.enum(["Male", "Female", "Others"]).optional(),
+    age: z.number().min(13, "Age must be at least 13").max(100, "Age must be at most 100").optional(),
+
     photoUrl: z
       .string()
       .optional()
@@ -58,11 +61,11 @@ export const signUpSchema = (isSignup = true) =>
     about: z
       .string()
       .min(10, "About must be a between 10 to 200 characters long.")
-      .max(200, "About must be a between 10 to 200 characters long."),
+      .max(200, "About must be a between 10 to 200 characters long.").optional(),
   })
   .superRefine((data, ctx) => {
     // Required fields only for signup
-    if (isSignup) {
+    // if (isSignup) {
       if (!data.firstName || !data.emailId || !data.phoneNumber || !data.password) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -70,7 +73,7 @@ export const signUpSchema = (isSignup = true) =>
             "firstName, emailId, phoneNumber and password are required fields.",
         });
       }
-    }
+    // }
   });
 
   export const updateSchema = z
