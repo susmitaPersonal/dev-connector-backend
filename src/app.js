@@ -1,18 +1,21 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
+const cookieParser = require('cookie-parser')
 const dotenv = require('dotenv');
 dotenv.config();
 const app = express();
 const { connectDB } = require('./config/db');
 const User = require("./models/user");
-const userval = require('./validationSchema/auth');
+const { signUpSchema } = require('./validationSchema/auth');
+const { userAuth } = require("./middlewares/auth")
 
 app.use(express.json())
+app.use(cookieParser())
 
 app.post("/signup", async (req, res) => {
-    const {success, data, error} = userval.safeParse(req.body);
+    const {success, data, error} = signUpSchema.safeParse(req.body);
     if (!success) {
-        return res.status(401).json({
+        return res.status(422).json({
             success: false,
             errors: error.format()
         })
@@ -27,23 +30,28 @@ app.post("/signup", async (req, res) => {
     }
 })
 
-app.get("/feed", async (req, res) => {
+app.get("/feed", userAuth, async (req, res) => {
     try{
         console.log('Received request to /feed with body:', req.body);
         if(!req.body) {
-            const allUsers = await User.find()
+            const allUsers = await User.find({_id: {$ne: req.user._id}})
+            if( !allUsers.length ) {
+                req.status(404).json({ error: "No users found" })
+            }
             return res.status(200).json({data: allUsers, message: "Check out all the users in the database"})
         }
 
         const { emailId } = req.body;
-        console.log('Received emailId in request body:', emailId);
+        // console.log('Received emailId in request body:', emailId);
         if(!emailId) {
             return res.status(400).json({ error: 'Email ID is required' });
 
         }
-        const userList = await User.find({ emailId})
+
+        const userList = await User.find({ emailId })
+        console.log('Fetched user according to email id:', userList)
         if(!userList || userList.length === 0) {
-            return res.status(404).json({ error: 'User not found' });
+            return res.status(204).json({ message: 'User not found' });
         }
         return res.status(201).json({ data: userList, message: "feed got fetched succesfully"})
 
@@ -75,7 +83,7 @@ app.patch("/update-user", async (req, res) => {
         // const data = req.body;
         const { success, data, error } = updateSchema.safeParse(req.body)
         if(!success) {
-            return res.status(400).json({ error: error.format() });
+            return res.status(422).json({ error: error.format() });
         }
 
         const updateUser = await User.findByIdAndUpdate({
@@ -86,6 +94,29 @@ app.patch("/update-user", async (req, res) => {
     catch(err) {
         return res.status(500).json({error: 'Failed to update user' });
     }
+})
+
+app.post("/signin", async(req, res) => {
+    try{
+        const { emailId, password } = req.body;
+        // validation
+        const user = await User.findOne({ emailId});
+        if(!user) {
+            return res.status(404).json({ error: 'Invalid credentials.' });
+        }
+        const isPasswordvalid = await user.validatePassword( password )
+        if(!isPasswordvalid) {
+            return res.status(404).json({ error: 'Invalid credentials.' });
+        }
+        const token = await user.getJwt();
+        return res.status(200).cookie("token", token, { expires: new Date(Date.now() + 8 * 3600000), httpOnly: true }).json({ data: user, message: "User signed in successfully" });
+    } catch (err) {
+        return res.status(500).json({error: 'Failed to sign in user'})
+    }
+})
+
+app.get("/profile", userAuth, async(req, res) => {
+    return res.status(200).json({ data: req.user, message: "User profile fetched successfully" });
 })
 
 // Connect to the database

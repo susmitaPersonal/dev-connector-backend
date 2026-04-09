@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const v = require("validator")
-const { minLength, maxLength, uppercase } = require("zod");
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
 
 
 const UserSchema = new mongoose.Schema({
@@ -35,7 +37,7 @@ const UserSchema = new mongoose.Schema({
         minLength: 10,
         maxLength: 15,
         validate(value) {
-            if(!v.isMobilePhone(value, 'any', { strictMode: true })) {
+            if(!v.isMobilePhone(value)) {
                 throw new Error("Invalid phone number format")
             
             }  
@@ -58,9 +60,9 @@ const UserSchema = new mongoose.Schema({
     },
     gender: {
         type: String,
-        required: true,
-        validate(value){
-            if(!["Male", "female", "Others"].includes(value)) {
+        required: false,
+        validate(value) {
+            if(!["Male", "Female", "Others"].includes(value)) {
                 throw new Error("Gender must be either Male, Female, or Others")
             }
         }
@@ -86,6 +88,18 @@ const UserSchema = new mongoose.Schema({
 {
     timestamps: true
 })
+
+UserSchema.methods.getJwt = async function() {
+    const user = this;
+    const token = await jwt.sign({_id: user._id}, 'ASHWAGANDHA', { expiresIn: '7d' })
+    return token;
+}
+
+UserSchema.methods.validatePassword = async function( userPassword ) {
+    const user = this;
+    const isPasswordvalid = await bcrypt.compare(userPassword, user.password);
+    return isPasswordvalid;
+}
 
 const UserModel = mongoose.model("User", UserSchema);
 
