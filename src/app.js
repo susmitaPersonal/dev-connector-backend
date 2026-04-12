@@ -6,6 +6,7 @@ const { connectDB } = require('./config/db');
 const authRouter = require('./router/auth')
 const profile = require('./router/profile')
 const requests = require('./router/request')
+const users = require('./router/user')
 
 dotenv.config();
 const app = express();
@@ -15,7 +16,8 @@ app.use(cookieParser())
 
 app.use('/', authRouter)
 app.use('/profile/', profile)
-app.use('/', requests)
+app.use('/request', requests)
+app.use('/user', users)
 
 // Connect to the database
 connectDB().then(() => {

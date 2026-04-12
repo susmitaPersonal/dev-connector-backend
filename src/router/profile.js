@@ -9,38 +9,6 @@ app.get("/profile", userAuth, async(req, res) => {
     return res.status(200).json({ data: req.user, message: "User profile fetched successfully" });
 })
 
-
-profileRouter.get("/feed", userAuth, async (req, res) => {
-    try{
-        console.log('Received request to /feed with body:', req.body);
-        if(!req.body) {
-            const allUsers = await User.find({_id: {$ne: req.user._id}})
-            if( !allUsers.length ) {
-                req.status(404).json({ error: "No users found" })
-            }
-            return res.status(200).json({data: allUsers, message: "Check out all the users in the database"})
-        }
-
-        const { emailId } = req.body;
-        // console.log('Received emailId in request body:', emailId);
-        if(!emailId) {
-            return res.status(400).json({ error: 'Email ID is required' });
-
-        }
-
-        const userList = await User.find({ emailId })
-        console.log('Fetched user according to email id:', userList)
-        if(!userList || userList.length === 0) {
-            return res.status(204).json({ message: 'User not found' });
-        }
-        return res.status(201).json({ data: userList, message: "feed got fetched succesfully"})
-
-    } catch(err) {
-        console.log('Error fetching feed in app.js:', err);
-        res.status(500).json({ error: 'Failed to fetch feed' });
-    }
-})
-
 profileRouter.delete("/delete", async(req, res) => {
     try {
         const { _id } = req.params;
