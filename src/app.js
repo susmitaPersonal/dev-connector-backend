@@ -1,6 +1,8 @@
 const express = require('express');
 const cookieParser = require('cookie-parser')
 const dotenv = require('dotenv');
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./swagger/swagger");
 
 const { connectDB } = require('./config/db');
 const authRouter = require('./router/auth')
@@ -13,6 +15,7 @@ const app = express();
 
 app.use(express.json())
 app.use(cookieParser())
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use('/', authRouter)
 app.use('/profile/', profile)

@@ -20,8 +20,8 @@ userRouter.get('/connections', userAuth, async (req, res) => {
                 status: "interested"
             }
         ]
-        }).populated("fromUserId", USER_SAFE_ATTRIBUTES)
-        .populated("toUserId", USER_SAFE_ATTRIBUTES)
+        }).populate("fromUserId", USER_SAFE_ATTRIBUTES)
+        .populate("toUserId", USER_SAFE_ATTRIBUTES)
 
         const data = connectionRequest.map(row => {
              if(row.fromUserId._id.toString() === loggedinUser._id.toString()) {
@@ -42,7 +42,7 @@ userRouter.get('/requests/recieved', userAuth, async (req, res) => {
         const connectionRequest = await ConnectionRequest.find({
             toUserId: loggedinUser._id,
             status: "interested"
-        }).populated("fromUserId", USER_SAFE_ATTRIBUTES)
+        }).populate("fromUserId", USER_SAFE_ATTRIBUTES)
         return res.status(200).json({ data: connectionRequest, message: "Pending requests fetched successfully." })
     } catch (err) {
         return res.status(500).json({ error: err.message })
@@ -52,7 +52,7 @@ userRouter.get('/requests/recieved', userAuth, async (req, res) => {
 
 userRouter.get("/feed", userAuth, async (req, res) => {
     try{
-        const loggedinUser = re.user;
+        const loggedinUser = req.user;
 
         const page = parseInt(req.query.page) || 1
         const limit = parseInt(req.query.limit) || 10;
@@ -68,13 +68,13 @@ userRouter.get("/feed", userAuth, async (req, res) => {
                     toUserId: req.user._id
                 }
             ]
-        }).select('formUserid toUserId')
+        }).select('fromUserId toUserId')
         .skip(skip)
         .limit(limit)
 
         const hiddenUsersFromFeed = connectionRequest.reduce((acc, el) => {
             acc.add(req.fromUserId.toString());
-            acc.add(req.touserId.toString());
+            acc.add(req.toUserId.toString());
             return acc;
         }, new Set())
 

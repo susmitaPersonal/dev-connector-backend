@@ -12,9 +12,9 @@ const connectionReuestSchema = new mongoose.Schema({
         ref: "User"
     },
     status: {
-        type: string,
+        type: String,
         enum: {
-            values: ["ignored", "interested", "accecpted", "rejected", ],
+            values: ["ignored", "interested", "accepted", "rejected", ],
             message: `{VALUE} is incorrect status type.`
         },
         required: true
@@ -34,6 +34,6 @@ connectionReuestSchema.pre("save", function () {
     }
 })
 
-const ConnectionRequestModel = new mongoose.Model("ConnectionRequest", connectionReuestSchema);
+const ConnectionRequestModel = mongoose.model("ConnectionRequest", connectionReuestSchema);
 
 module.exports = ConnectionRequestModel;

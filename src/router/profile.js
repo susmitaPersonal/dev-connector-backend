@@ -5,7 +5,7 @@ const { updateSchema } = require('../validationSchema/auth');
 
 const profileRouter = express.Router();
 
-app.get("/profile", userAuth, async(req, res) => {
+profileRouter.get("/", userAuth, async(req, res) => {
     return res.status(200).json({ data: req.user, message: "User profile fetched successfully" });
 })
 
@@ -48,7 +48,7 @@ profileRouter.patch("/edit", userAuth, async (req, res) => {
 
 profileRouter.get('/', userAuth, async (req, res) => {
     const user = req.user;
-    return req.status(200).json( { data: user, message: "Your profile fetched successfully." } )
+    return res.status(200).json( { data: user, message: "Your profile fetched successfully." } )
 })
 
 
