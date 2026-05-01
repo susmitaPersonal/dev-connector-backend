@@ -1,29 +1,26 @@
 const express = require('express');
+const cookieParser = require('cookie-parser')
 const dotenv = require('dotenv');
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./swagger/swagger");
+
+const { connectDB } = require('./config/db');
+const authRouter = require('./router/auth')
+const profile = require('./router/profile')
+const requests = require('./router/request')
+const users = require('./router/user')
+
 dotenv.config();
 const app = express();
-const { connectDB } = require('./config/db');
-const User = require("./models/user");
-const userval = require('./validationSchema/auth');
 
 app.use(express.json())
+app.use(cookieParser())
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-app.post("/signup", async (req, res) => {
-    const {success, data, error} = userval.safeParse(req.body);
-    if (!success) {
-        return res.status(401).json({
-            success: false,
-            errors: error.format()
-        })
-    }
-    const user = new User(data)
-    try {
-        await user.save()
-        return res.status(200).send("User added successfully.")
-    } catch (e) {
-        return res.status(400).send("Error saving the user: " + e.message)
-    }
-})
+app.use('/', authRouter)
+app.use('/profile/', profile)
+app.use('/request', requests)
+app.use('/user', users)
 
 // Connect to the database
 connectDB().then(() => {
