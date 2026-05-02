@@ -1,0 +1,817 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Dev Connector",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://ec2-43-205-126-201.ap-south-1.compute.amazonaws.com/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Authentication APIs"
+    },
+    {
+      "name": "Profile",
+      "description": "User profile APIs"
+    },
+    {
+      "name": "Connection",
+      "description": "Connection request APIs"
+    },
+    {
+      "name": "User",
+      "description": "User related APIs"
+    }
+  ],
+  "paths": {
+    "/signup": {
+      "post": {
+        "summary": "Register a new user",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignUpRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User added successfully"
+          },
+          "422": {
+            "description": "Validation error (Zod validation failed)"
+          },
+          "400": {
+            "description": "Error saving user"
+          }
+        }
+      }
+    },
+    "/signin": {
+      "post": {
+        "summary": "Login user",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignInRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User signed in successfully",
+            "headers": {
+              "Set-Cookie": {
+                "description": "JWT token stored in cookie",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invalid credentials"
+          },
+          "500": {
+            "description": "Failed to sign in user"
+          }
+        }
+      }
+    },
+    "/signout": {
+      "post": {
+        "summary": "Logout user",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Logout successfully"
+          },
+          "500": {
+            "description": "Something went wrong"
+          }
+        }
+      }
+    },
+    "/profile": {
+      "get": {
+        "summary": "Get logged-in user profile",
+        "tags": [
+          "Profile"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/profile/delete": {
+      "delete": {
+        "summary": "Delete user by ID",
+        "tags": [
+          "Profile"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID to delete"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted successfully"
+          },
+          "400": {
+            "description": "User ID is required"
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "500": {
+            "description": "Failed to delete user"
+          }
+        }
+      }
+    },
+    "/profile/edit": {
+      "patch": {
+        "summary": "Update logged-in user profile",
+        "tags": [
+          "Profile"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error"
+          },
+          "500": {
+            "description": "Failed to update user"
+          }
+        }
+      }
+    },
+    "/request/send/{status}/{toUserId}": {
+      "post": {
+        "summary": "Send connection request (interested / ignored)",
+        "tags": [
+          "Connection"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "status",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "interested",
+                "ignored"
+              ]
+            },
+            "description": "Status of connection request"
+          },
+          {
+            "in": "path",
+            "name": "toUserId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Target user ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionActionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid status or connection already exists"
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/request/review/{status}/{requestId}": {
+      "post": {
+        "summary": "Review connection request (accept / reject)",
+        "tags": [
+          "Connection"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "status",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "accepted",
+                "rejected"
+              ]
+            },
+            "description": "Action to perform"
+          },
+          {
+            "in": "path",
+            "name": "requestId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Connection request ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Connection request updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionActionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid status"
+          },
+          "404": {
+            "description": "Request not found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/user/connections": {
+      "get": {
+        "summary": "Get all connection requests (sent + received)",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pending requests fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ConnectionRequestResponse"
+                      }
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/user/requests/recieved": {
+      "get": {
+        "summary": "Get received connection requests",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pending requests fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ConnectionRequestResponse"
+                      }
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/user/feed": {
+      "get": {
+        "summary": "Get user feed (excluding connected users)",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "type": "number"
+            },
+            "example": 1
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "number"
+            },
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User feed fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SafeUser"
+                      }
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to fetch feed"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "required": [
+          "firstName",
+          "emailId",
+          "phoneNumber",
+          "password",
+          "age"
+        ],
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "64f1c2a12b3c4d5e6f789012"
+          },
+          "firstName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50,
+            "example": "Susmita"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Biswas"
+          },
+          "emailId": {
+            "type": "string",
+            "format": "email",
+            "example": "susmita@gmail.com"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "example": "9876543210"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "example": "Strong@123"
+          },
+          "age": {
+            "type": "number",
+            "minimum": 13,
+            "maximum": 100,
+            "example": 25
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "Male",
+              "Female",
+              "Others"
+            ],
+            "example": "Female"
+          },
+          "about": {
+            "type": "string"
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "React",
+              "Node.js"
+            ]
+          },
+          "photoUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SignUpRequest": {
+        "type": "object",
+        "required": [
+          "firstName",
+          "emailId",
+          "phoneNumber",
+          "password",
+          "age"
+        ],
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "example": "Susmita"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Biswas"
+          },
+          "emailId": {
+            "type": "string",
+            "format": "email",
+            "example": "susmita@gmail.com"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "example": "9876543210"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "example": "Strong@123"
+          },
+          "age": {
+            "type": "number",
+            "example": 25
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "Male",
+              "Female",
+              "Others"
+            ],
+            "example": "Female"
+          },
+          "about": {
+            "type": "string"
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "React",
+              "Node.js"
+            ]
+          },
+          "photoUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "SignInRequest": {
+        "type": "object",
+        "required": [
+          "emailId",
+          "password"
+        ],
+        "properties": {
+          "emailId": {
+            "type": "string",
+            "format": "email",
+            "example": "susmita@gmail.com"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "example": "Strong@123"
+          }
+        }
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "description": "Fields that can be updated by user",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "example": "Susmita"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "age": {
+            "type": "number",
+            "example": 26
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "Male",
+              "Female",
+              "Others"
+            ]
+          },
+          "about": {
+            "type": "string"
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "photoUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/User"
+          },
+          "message": {
+            "type": "string",
+            "example": "Success"
+          }
+        }
+      },
+      "SafeUser": {
+        "type": "object",
+        "description": "Public user fields (safe attributes)",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "photoUrl": {
+            "type": "string"
+          },
+          "age": {
+            "type": "number"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "about": {
+            "type": "string"
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ConnectionRequestResponse": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "fromUserId": {
+            "$ref": "#/components/schemas/SafeUser"
+          },
+          "toUserId": {
+            "$ref": "#/components/schemas/SafeUser"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ignored",
+              "interested",
+              "accepted",
+              "rejected"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FeedResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SafeUser"
+            }
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ConnectionRequest": {
+        "type": "object",
+        "required": [
+          "fromUserId",
+          "toUserId",
+          "status"
+        ],
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "fromUserId": {
+            "type": "string",
+            "description": "User ID who sends request",
+            "example": "64f1c2a12b3c4d5e6f789012"
+          },
+          "toUserId": {
+            "type": "string",
+            "description": "User ID who receives request"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ignored",
+              "interested",
+              "accepted",
+              "rejected"
+            ],
+            "example": "interested"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ConnectionActionResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ConnectionRequestResponse"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
