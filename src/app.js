@@ -21,6 +21,9 @@ app.get("/api-docs.json", (req, res) => {
 });
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+app.use('/', (req, res) => {
+    res.send("OK")
+})
 app.use('/', authRouter)
 app.use('/profile/', profile)
 app.use('/request', requests)
